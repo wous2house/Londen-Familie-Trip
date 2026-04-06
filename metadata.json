@@ -1,0 +1,7 @@
+{
+  "name": "Londen Familiereis",
+  "description": "Een app om je familietrip naar Londen te plannen, bezienswaardigheden te ontdekken en routes te bepalen met behulp van een slimme AI-assistent.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
