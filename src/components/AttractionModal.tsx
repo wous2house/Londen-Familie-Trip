@@ -11,7 +11,7 @@ interface AttractionModalProps {
   placeDetails: {summary?: string, rating?: number, reviews?: number} | null;
   routeSteps: string[] | null;
   isFetchingRoute: boolean;
-  fetchRouteSteps: (attraction: Attraction) => void;
+  fetchRouteSteps: (attraction: Attraction, origin?: string) => void;
   openRoute: (attraction: Attraction) => void;
   setShowDaySelector: (attraction: Attraction | null) => void;
 }
@@ -165,12 +165,21 @@ export default function AttractionModal({
           </h3>
 
           {!routeSteps && !isFetchingRoute && (
-            <button
-              onClick={() => fetchRouteSteps(a)}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-xl text-sm font-bold w-full transition-colors"
-            >
-              Haal stapsgewijze route op
-            </button>
+            <div className="space-y-3">
+              <p className="text-sm text-slate-300 mb-2">Kies je vertrekpunt voor een stapsgewijze route via Gemini:</p>
+              <button
+                onClick={() => fetchRouteSteps(a)}
+                className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-xl text-sm font-bold w-full transition-colors flex items-center justify-center"
+              >
+                <MapPin className="w-4 h-4 mr-2 text-blue-400" /> Vanaf huidige locatie
+              </button>
+              <button
+                onClick={() => fetchRouteSteps(a, "113 Woodside Rd, London N22 5HR, Verenigd Koninkrijk")}
+                className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-xl text-sm font-bold w-full transition-colors flex items-center justify-center"
+              >
+                <Map className="w-4 h-4 mr-2 text-blue-400" /> Vanaf het appartement
+              </button>
+            </div>
           )}
 
           {isFetchingRoute && (

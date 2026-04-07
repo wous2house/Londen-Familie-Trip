@@ -39,13 +39,13 @@ export async function searchAttractions(query: string) {
   }
 }
 
-export async function getRouteSteps(destination: string, city: string, originLat?: number, originLng?: number) {
+export async function getRouteSteps(destination: string, city: string, originLat?: number, originLng?: number, originAddress?: string) {
   if (!ai) {
     console.error("Gemini API key is missing.");
     return ["Route ophalen mislukt omdat API key mist."];
   }
   try {
-    let originText = originLat && originLng ? `mijn huidige locatie (coördinaten: ${originLat}, ${originLng})` : `het centrum van ${city}`;
+    let originText = originAddress ? `adres: ${originAddress}` : (originLat && originLng ? `mijn huidige locatie (coördinaten: ${originLat}, ${originLng})` : `het centrum van ${city}`);
     
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
