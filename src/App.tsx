@@ -4,40 +4,16 @@ import { attractions, Attraction } from './data';
 import { chatWithAssistant, searchAttractions, getRouteSteps } from './gemini';
 import Markdown from 'react-markdown';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import DiscoverTab from './components/DiscoverTab';
+import MapTab from './components/MapTab';
+import SavedTab from './components/SavedTab';
+import ItineraryTab from './components/ItineraryTab';
+import AttractionModal from './components/AttractionModal';
 
-// Fix leaflet icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
+export type City = 'Londen' | 'Oxford';
 
-const normalIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const plannedIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
-type City = 'Londen' | 'Oxford';
-
-const APP_VERSION = 'v1.5.0';
+const APP_VERSION = 'v1.5.2';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -247,435 +223,6 @@ export default function App() {
     ? searchResults 
     : attractions.filter(a => a.city === activeCity);
 
-  const renderDiscover = () => (
-    <div className="p-4 pb-24">
-      <div className="flex flex-col items-center justify-center mb-6 pt-4">
-        <h1 className="text-2xl font-bold text-white tracking-tight">Londen & Oxford Trip</h1>
-        <span className="text-xs font-medium text-slate-400 mt-1">{APP_VERSION}</span>
-      </div>
-
-      <div className="flex bg-slate-800 p-1 rounded-2xl mb-6">
-        <button 
-          onClick={() => { setActiveCity('Londen'); setSearchQuery(''); setSearchResults([]); }}
-          className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${activeCity === 'Londen' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-        >
-          Londen
-        </button>
-        <button 
-          onClick={() => { setActiveCity('Oxford'); setSearchQuery(''); setSearchResults([]); }}
-          className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${activeCity === 'Oxford' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-        >
-          Oxford
-        </button>
-      </div>
-
-      <form onSubmit={handleSearch} className="relative mb-8">
-        <input
-          type="text"
-          placeholder={`Zoek in ${activeCity}...`}
-          className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-800 text-white placeholder-slate-400 shadow-sm border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <Search className="absolute left-4 top-4 text-slate-400 w-5 h-5" />
-        <button type="submit" className="sr-only">Zoek</button>
-      </form>
-
-      <h2 className="text-xl font-bold text-white mb-4">Aanbevolen in {activeCity}</h2>
-      
-      <div className="grid gap-4">
-        {displayedAttractions.map((attraction) => (
-          <div 
-            key={attraction.id} 
-            className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
-            onClick={() => {
-              setSelectedAttraction(attraction);
-              setCurrentImageIndex(0);
-            }}
-          >
-            <div className="h-56 overflow-hidden relative">
-              <img src={attraction.imageUrl} alt={attraction.name} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-              <div 
-                className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md p-2 rounded-full border border-white/10 z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSavedAttractions(prev => 
-                    prev.includes(attraction.id) 
-                      ? prev.filter(id => id !== attraction.id)
-                      : [...prev, attraction.id]
-                  );
-                }}
-              >
-                <Heart className={`w-5 h-5 ${savedAttractions.includes(attraction.id) ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} />
-              </div>
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">{attraction.name}</h3>
-                <div className="flex items-center text-xs text-slate-300 space-x-3">
-                  <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {attraction.openingHours}</span>
-                  {attraction.ticketRequired && <span className="flex items-center text-blue-400"><Ticket className="w-3 h-3 mr-1" /> Tickets</span>}
-                </div>
-              </div>
-            </div>
-            <div className="p-5">
-              <p className="text-slate-400 text-sm leading-relaxed">{attraction.shortDescription}</p>
-            </div>
-          </div>
-        ))}
-        {isSearching && <p className="text-center text-slate-400 py-4">Zoeken via Google Maps...</p>}
-      </div>
-    </div>
-  );
-
-  const renderMap = () => {
-    const center = activeCity === 'Londen' ? [51.5074, -0.1278] : [51.7520, -1.2577];
-    const plannedIds = Object.values(itinerary).flat().map(a => a.id);
-    const cityAttractions = attractions.filter(a => a.city === activeCity);
-
-    return (
-      <div className="h-full w-full relative bg-slate-900 isolate z-0">
-        <div className="absolute top-4 left-4 right-4 z-[500] flex items-center justify-between pointer-events-none">
-          <h1 className="text-2xl font-bold text-white drop-shadow-md">Kaartoverzicht</h1>
-        </div>
-        
-        <MapContainer center={center as any} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          />
-          {cityAttractions.map((attraction) => {
-            const isPlanned = plannedIds.includes(attraction.id);
-            return (
-              <Marker 
-                key={attraction.id} 
-                position={[attraction.lat, attraction.lng]}
-                icon={isPlanned ? plannedIcon : normalIcon}
-              >
-                <Popup className="custom-popup">
-                  <div className="text-center">
-                    <h3 className="font-bold text-slate-900 text-sm mb-1">{attraction.name}</h3>
-                    <button 
-                      onClick={() => {
-                        setSelectedAttraction(attraction);
-                        setCurrentImageIndex(0);
-                      }} 
-                      className="text-blue-600 underline text-xs font-medium"
-                    >
-                      Bekijk details
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
-      </div>
-    );
-  };
-
-  const renderSaved = () => {
-    const saved = attractions.filter(a => savedAttractions.includes(a.id));
-    
-    return (
-      <div className="p-4 pb-24 h-full overflow-y-auto">
-        <h1 className="text-2xl font-bold text-white mb-6 pt-4">Opgeslagen</h1>
-        
-        {saved.length === 0 ? (
-          <div className="bg-slate-800/50 rounded-3xl p-8 text-center border border-dashed border-slate-700">
-            <p className="text-slate-400 text-sm mb-4">Je hebt nog geen bezienswaardigheden opgeslagen.</p>
-            <button 
-              onClick={() => setActiveTab('discover')}
-              className="inline-flex items-center justify-center bg-slate-800 text-blue-400 font-bold text-sm px-6 py-3 rounded-xl border border-slate-700 hover:bg-slate-700 transition-colors"
-            >
-              <Search className="w-4 h-4 mr-2" /> Ontdekken
-            </button>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {saved.map((attraction) => (
-              <div 
-                key={attraction.id} 
-                className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
-                onClick={() => {
-                  setSelectedAttraction(attraction);
-                  setCurrentImageIndex(0);
-                }}
-              >
-                <div className="h-40 overflow-hidden relative">
-                  <img src={attraction.imageUrl} alt={attraction.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                  <div 
-                    className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md p-2 rounded-full border border-white/10 z-10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSavedAttractions(prev => prev.filter(id => id !== attraction.id));
-                    }}
-                  >
-                    <Heart className="w-5 h-5 fill-red-500 text-red-500" />
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">{attraction.name}</h3>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderItinerary = () => (
-    <div className="p-4 pb-24 h-full overflow-y-auto">
-      <h1 className="text-2xl font-bold text-white mb-6 pt-4">Jullie Planning</h1>
-      
-      {Object.entries(itinerary).map(([day, items]) => (
-        <div key={day} className="mb-8">
-          <h2 className="text-lg font-bold text-blue-400 mb-4 flex items-center">
-            <Calendar className="w-5 h-5 mr-2" /> {day}
-          </h2>
-          
-          {items.length === 0 ? (
-            <div className="bg-slate-800/50 rounded-3xl p-8 text-center border border-dashed border-slate-700">
-              <p className="text-slate-400 text-sm mb-4">Nog geen activiteiten gepland.</p>
-              <button 
-                onClick={() => setActiveTab('discover')}
-                className="inline-flex items-center justify-center bg-slate-800 text-blue-400 font-bold text-sm px-6 py-3 rounded-xl border border-slate-700 hover:bg-slate-700 transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" /> Voeg iets toe
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {items.map((item, idx) => (
-                <div key={`${item.id}-${idx}`} className="bg-slate-800 p-4 rounded-3xl shadow-md border border-slate-700 flex items-center cursor-pointer hover:border-slate-600 transition-colors" onClick={() => { setSelectedAttraction(item); setCurrentImageIndex(0); }}>
-                  <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.name} className="w-20 h-20 rounded-2xl object-cover mr-4" />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-white text-lg">{item.name}</h3>
-                    <p className="text-xs text-slate-400 flex items-center mt-2">
-                      <MapPin className="w-3 h-3 mr-1" /> {item.location.split(',')[0]}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderAttractionDetail = () => {
-    if (!selectedAttraction) return null;
-    const a = selectedAttraction;
-    
-    // Gebruik de dynamisch ingeladen Wikimedia beelden, of val terug op de placeholders
-    const images = dynamicImages.length > 0 ? dynamicImages : (a.imageUrls && a.imageUrls.length > 0 ? a.imageUrls : [a.imageUrl]);
-
-    return (
-      <div className="fixed inset-0 bg-slate-900 z-[1000] overflow-y-auto pb-24">
-        <div className="relative h-80">
-          <img src={images[currentImageIndex]} alt={a.name} className="w-full h-full object-cover transition-opacity duration-300" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
-          
-          {images.length > 1 && (
-            <>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === 0 ? images.length - 1 : prev - 1); }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur-sm transition-colors"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === images.length - 1 ? 0 : prev + 1); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur-sm transition-colors"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-              <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2">
-                {images.map((_, idx) => (
-                  <div key={idx} className={`w-2 h-2 rounded-full transition-colors ${idx === currentImageIndex ? 'bg-white' : 'bg-white/40'}`} />
-                ))}
-              </div>
-            </>
-          )}
-          
-          <button 
-            onClick={() => setSelectedAttraction(null)}
-            className="absolute top-6 left-4 bg-slate-900/60 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/10"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          
-          <div className="absolute -bottom-8 left-4 right-4 bg-slate-800 rounded-3xl p-5 shadow-xl border border-slate-700 flex justify-between items-center">
-            <div>
-              <div className="flex items-center text-sm font-medium text-slate-400 mb-1">
-                <Clock className="w-4 h-4 mr-1 text-blue-400" /> Openingstijden
-              </div>
-              <div className="font-bold text-white text-lg">{a.openingHours}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-slate-400 mb-1">Status</div>
-              <div className="text-sm font-bold text-green-400 flex items-center justify-end">
-                <span className="w-2 h-2 rounded-full bg-green-400 mr-1.5 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span> Nu Open
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-5 pt-16 pb-6">
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="bg-blue-900/50 text-blue-300 text-xs font-bold px-3 py-1 rounded-full border border-blue-800/50">{a.city}</span>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-3">{a.name}</h1>
-          
-          {/* Rating from Google Maps */}
-          {placeDetails?.rating && (
-            <div className="flex items-center text-yellow-500 mb-2">
-              <Star className="w-5 h-5 fill-current" />
-              <span className="ml-1 font-bold text-white">{placeDetails.rating}</span>
-              <span className="ml-1 text-slate-400 text-sm">({placeDetails.reviews} reviews) - Google Maps</span>
-            </div>
-          )}
-
-          <p className="text-slate-400 flex items-start mb-8 text-sm">
-            <MapPin className="w-4 h-4 mr-1.5 mt-0.5 flex-shrink-0 text-slate-500" />
-            {a.location}
-          </p>
-
-          {/* Editorial Summary from Google Maps */}
-          {placeDetails?.summary && (
-            <div className="bg-slate-800 rounded-3xl p-6 shadow-lg border border-slate-700 mb-8">
-              <h3 className="font-bold text-white text-xl mb-4 flex items-center">
-                <Info className="w-5 h-5 text-blue-400 mr-2" /> Google Maps Info
-              </h3>
-              <p className="text-slate-300 text-sm leading-relaxed">{placeDetails.summary}</p>
-            </div>
-          )}
-
-          {a.ticketRequired && (
-            <div className="bg-blue-900/20 rounded-3xl p-6 mb-8 border border-blue-800/30">
-              <div className="flex items-center mb-3">
-                <Ticket className="w-6 h-6 text-blue-400 mr-3" />
-                <h3 className="font-bold text-blue-100 text-lg">Tickets & Tijdsloten</h3>
-              </div>
-              <p className="text-blue-200/70 text-sm mb-5 leading-relaxed">
-                Vergeet niet om je tickets vooraf online te reserveren! {a.timeSlotRequired && 'Een tijdslot is verplicht.'}
-              </p>
-              {a.bookingUrl ? (
-                <a href={a.bookingUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-center bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl text-sm font-bold w-full transition-colors shadow-lg shadow-blue-900/20">
-                  Boek via Officiële Website
-                </a>
-              ) : (
-                <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl text-sm font-bold w-full transition-colors shadow-lg shadow-blue-900/20">
-                  Boek een Tijdslot
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="bg-slate-800 rounded-3xl p-6 shadow-lg border border-slate-700 mb-8">
-            <h3 className="font-bold text-white text-xl mb-4">Over deze locatie</h3>
-            <p className="text-slate-300 text-sm leading-relaxed">{a.fullDescription}</p>
-          </div>
-
-          <div className="bg-slate-800 rounded-3xl p-6 shadow-lg border border-slate-700 mb-8">
-            <h3 className="font-bold text-white text-xl mb-4 flex items-center">
-              <Map className="w-5 h-5 text-blue-400 mr-2" /> Locatie op de kaart
-            </h3>
-            <div className="w-full h-64 mt-4 rounded-2xl overflow-hidden border border-slate-700">
-              <iframe 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                loading="lazy" 
-                allowFullScreen 
-                referrerPolicy="no-referrer-when-downgrade" 
-                src={`https://maps.google.com/maps?q=${a.lat},${a.lng}&z=15&output=embed`}
-              ></iframe>
-            </div>
-          </div>
-
-          <div className="bg-slate-800 rounded-3xl p-6 shadow-lg border border-slate-700 mb-8">
-            <h3 className="font-bold text-white text-xl mb-4 flex items-center">
-              <Navigation className="w-5 h-5 text-blue-400 mr-2" /> Routebeschrijving
-            </h3>
-            
-            {!routeSteps && !isFetchingRoute && (
-              <button 
-                onClick={() => fetchRouteSteps(a)}
-                className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-xl text-sm font-bold w-full transition-colors"
-              >
-                Haal stapsgewijze route op
-              </button>
-            )}
-            
-            {isFetchingRoute && (
-              <div className="flex items-center justify-center py-4 text-slate-400">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-                Route berekenen...
-              </div>
-            )}
-            
-            {routeSteps && (
-              <div className="space-y-3 mt-4">
-                {routeSteps.map((step, idx) => (
-                  <div key={idx} className="flex items-start">
-                    <div className="bg-blue-900/50 text-blue-400 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold mr-3 mt-0.5">
-                      {idx + 1}
-                    </div>
-                    <p className="text-slate-300 text-sm leading-relaxed">{step}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {a.highlights && a.highlights.length > 0 && (
-            <div className="mb-8">
-              <h3 className="font-bold text-white text-xl mb-5 flex items-center">
-                <Star className="w-5 h-5 text-yellow-500 mr-2" /> Hoogtepunten
-              </h3>
-              <div className="space-y-4">
-                {a.highlights.map((h, i) => (
-                  <div key={i} className="bg-slate-800 rounded-3xl p-5 shadow-lg border border-slate-700">
-                    <h4 className="font-bold text-white mb-2 text-lg">{h.title}</h4>
-                    <p className="text-sm text-slate-400 leading-relaxed">{h.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {a.familyTip && (
-            <div className="bg-green-900/20 rounded-3xl p-6 mb-8 border border-green-800/30">
-              <div className="flex items-center mb-3">
-                <Info className="w-6 h-6 text-green-400 mr-3" />
-                <h3 className="font-bold text-green-100 text-lg">Familietip</h3>
-              </div>
-              <p className="text-green-200/80 text-sm leading-relaxed">{a.familyTip}</p>
-            </div>
-          )}
-
-          <div className="flex space-x-4 mt-10">
-            <button 
-              onClick={() => setShowDaySelector(a)}
-              className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold flex items-center justify-center shadow-lg shadow-blue-900/20 transition-colors"
-            >
-              <Plus className="w-5 h-5 mr-2" /> Toevoegen
-            </button>
-            <button 
-              onClick={() => openRoute(a)}
-              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center shadow-lg transition-colors border border-slate-600"
-            >
-              <Navigation className="w-5 h-5 mr-2" /> Route
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderChat = () => (
     <div className={`fixed inset-0 bg-slate-900 z-[1000] flex flex-col transition-transform duration-300 ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
       <div className="bg-slate-800 border-b border-slate-700 text-white p-5 flex items-center justify-between shadow-md pt-safe">
@@ -745,10 +292,50 @@ export default function App() {
       
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'discover' && renderDiscover()}
-        {activeTab === 'map' && renderMap()}
-        {activeTab === 'itinerary' && renderItinerary()}
-        {activeTab === 'saved' && renderSaved()}
+        {activeTab === 'discover' && (
+          <DiscoverTab
+            APP_VERSION={APP_VERSION}
+            activeCity={activeCity}
+            setActiveCity={setActiveCity}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            setSearchResults={setSearchResults}
+            handleSearch={handleSearch}
+            displayedAttractions={displayedAttractions}
+            isSearching={isSearching}
+            setSelectedAttraction={setSelectedAttraction}
+            setCurrentImageIndex={setCurrentImageIndex}
+            savedAttractions={savedAttractions}
+            setSavedAttractions={setSavedAttractions}
+          />
+        )}
+        {activeTab === 'map' && (
+          <MapTab
+            activeCity={activeCity}
+            itinerary={itinerary}
+            attractions={attractions}
+            setSelectedAttraction={setSelectedAttraction}
+            setCurrentImageIndex={setCurrentImageIndex}
+          />
+        )}
+        {activeTab === 'itinerary' && (
+          <ItineraryTab
+            itinerary={itinerary}
+            setActiveTab={setActiveTab}
+            setSelectedAttraction={setSelectedAttraction}
+            setCurrentImageIndex={setCurrentImageIndex}
+          />
+        )}
+        {activeTab === 'saved' && (
+          <SavedTab
+            attractions={attractions}
+            savedAttractions={savedAttractions}
+            setActiveTab={setActiveTab}
+            setSelectedAttraction={setSelectedAttraction}
+            setCurrentImageIndex={setCurrentImageIndex}
+            setSavedAttractions={setSavedAttractions}
+          />
+        )}
       </div>
 
       {/* Floating Chat Button */}
@@ -762,7 +349,19 @@ export default function App() {
       )}
 
       {/* Overlays */}
-      {renderAttractionDetail()}
+      <AttractionModal
+        selectedAttraction={selectedAttraction}
+        setSelectedAttraction={setSelectedAttraction}
+        dynamicImages={dynamicImages}
+        currentImageIndex={currentImageIndex}
+        setCurrentImageIndex={setCurrentImageIndex}
+        placeDetails={placeDetails}
+        routeSteps={routeSteps}
+        isFetchingRoute={isFetchingRoute}
+        fetchRouteSteps={fetchRouteSteps}
+        openRoute={openRoute}
+        setShowDaySelector={setShowDaySelector}
+      />
       {renderChat()}
 
       {/* Day Selector Modal */}

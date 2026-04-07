@@ -1,8 +1,14 @@
 import { GoogleGenAI, Type } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// process.env werkt niet in Vite browser builds tenzij geconfigureerd. We gebruiken import.meta.env
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export async function searchAttractions(query: string) {
+  if (!ai) {
+    console.error("Gemini API key is missing. Add VITE_GEMINI_API_KEY to your .env file.");
+    return [];
+  }
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -34,6 +40,10 @@ export async function searchAttractions(query: string) {
 }
 
 export async function getRouteSteps(destination: string, city: string, originLat?: number, originLng?: number) {
+  if (!ai) {
+    console.error("Gemini API key is missing.");
+    return ["Route ophalen mislukt omdat API key mist."];
+  }
   try {
     let originText = originLat && originLng ? `mijn huidige locatie (coördinaten: ${originLat}, ${originLng})` : `het centrum van ${city}`;
     
@@ -64,6 +74,9 @@ export async function getRouteSteps(destination: string, city: string, originLat
 }
 
 export async function chatWithAssistant(history: { role: 'user' | 'model', parts: { text: string }[] }[], message: string) {
+  if (!ai) {
+    return "Je moet een VITE_GEMINI_API_KEY instellen om de chat te gebruiken.";
+  }
   try {
     const chat = ai.chats.create({
       model: 'gemini-3.1-pro-preview',
