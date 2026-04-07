@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.2.2';
+const APP_VERSION = 'v0.3.0';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -64,7 +64,7 @@ export default function App() {
         setItinerary(prev => {
           const newItinerary = { ...prev };
           itineraryRecords.forEach(record => {
-            const attraction = attractions.find(a => a.id === record.attraction_id);
+            const attraction = record.attraction_data || attractions.find(a => a.id === record.attraction_id);
             if (attraction && newItinerary[record.day]) {
               // Vermijd duplicaten
               if (!newItinerary[record.day].some(a => a.id === attraction.id)) {
@@ -81,6 +81,61 @@ export default function App() {
     };
 
     fetchInitialData();
+
+    // Set up real-time subscriptions
+    pb.collection('saved_attractions').subscribe('*', (e) => {
+      if (e.action === 'create' || e.action === 'update') {
+        setSavedAttractions(prev => {
+          if (!prev.includes(e.record.attraction_id)) {
+            return [...prev, e.record.attraction_id];
+          }
+          return prev;
+        });
+      } else if (e.action === 'delete') {
+        setSavedAttractions(prev => prev.filter(id => id !== e.record.attraction_id));
+      }
+    });
+
+    pb.collection('itinerary_items').subscribe('*', (e) => {
+      const attraction = e.record.attraction_data || attractions.find(a => a.id === e.record.attraction_id);
+      if (!attraction) return;
+
+      if (e.action === 'create') {
+        setItinerary(prev => {
+          const newItinerary = { ...prev };
+          if (newItinerary[e.record.day] && !newItinerary[e.record.day].some(a => a.id === attraction.id)) {
+            newItinerary[e.record.day] = [...newItinerary[e.record.day], attraction];
+          }
+          return newItinerary;
+        });
+      } else if (e.action === 'update') {
+        setItinerary(prev => {
+          const newItinerary = { ...prev };
+          // Remove from all days first
+          Object.keys(newItinerary).forEach(day => {
+            newItinerary[day] = newItinerary[day].filter(a => a.id !== attraction.id);
+          });
+          // Add to the new day
+          if (newItinerary[e.record.day]) {
+            newItinerary[e.record.day] = [...newItinerary[e.record.day], attraction];
+          }
+          return newItinerary;
+        });
+      } else if (e.action === 'delete') {
+        setItinerary(prev => {
+          const newItinerary = { ...prev };
+          Object.keys(newItinerary).forEach(day => {
+            newItinerary[day] = newItinerary[day].filter(a => a.id !== attraction.id);
+          });
+          return newItinerary;
+        });
+      }
+    });
+
+    return () => {
+      pb.collection('saved_attractions').unsubscribe('*');
+      pb.collection('itinerary_items').unsubscribe('*');
+    };
   }, []);
 
   useEffect(() => {
