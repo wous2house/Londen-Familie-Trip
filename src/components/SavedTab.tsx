@@ -3,8 +3,7 @@ import { Search, Heart } from 'lucide-react';
 import { Attraction } from '../data';
 
 interface SavedTabProps {
-  attractions: Attraction[];
-  savedAttractions: string[];
+  savedAttractionsData: Attraction[];
   setActiveTab: (tab: 'discover' | 'map' | 'itinerary' | 'saved') => void;
   setSelectedAttraction: (attraction: Attraction | null) => void;
   setCurrentImageIndex: (index: number) => void;
@@ -12,20 +11,17 @@ interface SavedTabProps {
 }
 
 export default function SavedTab({
-  attractions,
-  savedAttractions,
+  savedAttractionsData,
   setActiveTab,
   setSelectedAttraction,
   setCurrentImageIndex,
   toggleSavedAttraction
 }: SavedTabProps) {
-  const saved = attractions.filter(a => savedAttractions.includes(a.id));
-
   return (
     <div className="p-4 pb-24 h-full overflow-y-auto">
       <h1 className="text-2xl font-bold text-white mb-6 pt-4">Opgeslagen</h1>
 
-      {saved.length === 0 ? (
+      {savedAttractionsData.length === 0 ? (
         <div className="bg-slate-800/50 rounded-3xl p-8 text-center border border-dashed border-slate-700">
           <p className="text-slate-400 text-sm mb-4">Je hebt nog geen bezienswaardigheden opgeslagen.</p>
           <button
@@ -37,7 +33,7 @@ export default function SavedTab({
         </div>
       ) : (
         <div className="grid gap-4">
-          {saved.map((attraction) => (
+          {savedAttractionsData.map((attraction) => (
             <div
               key={attraction.id}
               className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"

@@ -33,7 +33,8 @@ export default function AttractionModal({
   const a = selectedAttraction;
 
   // Gebruik de dynamisch ingeladen Wikimedia beelden, of val terug op de placeholders
-  const images = dynamicImages.length > 0 ? dynamicImages : (a.imageUrls && a.imageUrls.length > 0 ? a.imageUrls : [a.imageUrl]);
+  const fallbackImages = dynamicImages.length > 0 ? dynamicImages : (a.imageUrls && a.imageUrls.length > 0 ? a.imageUrls : []);
+  const images = Array.from(new Set([a.imageUrl, ...fallbackImages]));
 
   return (
     <div className="fixed inset-0 bg-slate-900 z-[1000] overflow-y-auto pb-24">

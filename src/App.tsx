@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.4.0';
+const APP_VERSION = 'v0.4.1';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -30,6 +30,7 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   
   const [savedAttractions, setSavedAttractions] = useState<string[]>([]);
+  const [savedAttractionsData, setSavedAttractionsData] = useState<Attraction[]>([]);
   const [showDaySelector, setShowDaySelector] = useState<Attraction | null>(null);
   const [placeDetails, setPlaceDetails] = useState<{summary?: string, rating?: number, reviews?: number} | null>(null);
   
@@ -58,6 +59,7 @@ export default function App() {
       try {
         const savedRecords = await pb.collection('saved_attractions').getFullList();
         setSavedAttractions(savedRecords.map(r => r.attraction_id));
+        setSavedAttractionsData(savedRecords.map(r => r.attraction_data || attractions.find(a => a.id === r.attraction_id)).filter(Boolean));
 
         const itineraryRecords = await pb.collection('itinerary_items').getFullList();
 
@@ -271,6 +273,9 @@ export default function App() {
     setSavedAttractions(prev =>
       isSaved ? prev.filter(id => id !== attraction.id) : [...prev, attraction.id]
     );
+    setSavedAttractionsData(prev =>
+      isSaved ? prev.filter(a => a.id !== attraction.id) : [...prev, attraction]
+    );
 
     try {
       if (isSaved) {
@@ -294,6 +299,9 @@ export default function App() {
       // Rollback
       setSavedAttractions(prev =>
         isSaved ? [...prev, attraction.id] : prev.filter(id => id !== attraction.id)
+      );
+      setSavedAttractionsData(prev =>
+        isSaved ? [...prev, attraction] : prev.filter(a => a.id !== attraction.id)
       );
     }
   };
@@ -523,8 +531,7 @@ export default function App() {
         )}
         {activeTab === 'saved' && (
           <SavedTab
-            attractions={attractions}
-            savedAttractions={savedAttractions}
+            savedAttractionsData={savedAttractionsData}
             setActiveTab={setActiveTab}
             setSelectedAttraction={setSelectedAttraction}
             setCurrentImageIndex={setCurrentImageIndex}

@@ -20,12 +20,12 @@ export default defineConfig(({mode}) => {
           theme_color: '#1e293b',
           icons: [
             {
-              src: 'https://cdn-icons-png.flaticon.com/512/3061/3061483.png',
+              src: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/330px-Flag_of_the_United_Kingdom.svg.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'https://cdn-icons-png.flaticon.com/512/3061/3061483.png',
+              src: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/330px-Flag_of_the_United_Kingdom.svg.png',
               sizes: '512x512',
               type: 'image/png'
             }
