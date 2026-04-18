@@ -16,6 +16,7 @@ interface DiscoverTabProps {
   setCurrentImageIndex: (index: number) => void;
   savedAttractions: string[];
   toggleSavedAttraction: (attraction: Attraction) => void;
+  attractionsCache: Record<string, any>;
 }
 
 export default function DiscoverTab({
@@ -31,7 +32,8 @@ export default function DiscoverTab({
   setSelectedAttraction,
   setCurrentImageIndex,
   savedAttractions,
-  toggleSavedAttraction
+  toggleSavedAttraction,
+  attractionsCache
 }: DiscoverTabProps) {
   return (
     <div className="p-4 pb-24">
@@ -71,18 +73,31 @@ export default function DiscoverTab({
       <h2 className="text-xl font-bold text-white mb-4">Aanbevolen in {activeCity}</h2>
 
       <div className="grid gap-4">
-        {displayedAttractions.map((attraction) => (
-          <div
-            key={attraction.id}
-            className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
-            onClick={() => {
-              setSelectedAttraction(attraction);
-              setCurrentImageIndex(0);
-            }}
-          >
-            <div className="h-56 overflow-hidden relative">
-              <img src={attraction.imageUrl} alt={attraction.name} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+        {displayedAttractions.map((attraction) => {
+          const cache = attractionsCache[attraction.id];
+          let displayImage = attraction.imageUrl;
+          if (cache) {
+            if (cache.dynamicImages && cache.dynamicImages.length > 0) {
+              displayImage = cache.dynamicImages[0];
+            } else if (cache.imageUrl) {
+              displayImage = cache.imageUrl;
+            } else if (cache.imageUrls && cache.imageUrls.length > 0) {
+              displayImage = cache.imageUrls[0];
+            }
+          }
+
+          return (
+            <div
+              key={attraction.id}
+              className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
+              onClick={() => {
+                setSelectedAttraction(attraction);
+                setCurrentImageIndex(0);
+              }}
+            >
+              <div className="h-56 overflow-hidden relative">
+                <img src={displayImage} alt={attraction.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
               <div
                 className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md p-2 rounded-full border border-white/10 z-10"
                 onClick={(e) => {
@@ -104,7 +119,8 @@ export default function DiscoverTab({
               <p className="text-slate-400 text-sm leading-relaxed">{attraction.shortDescription}</p>
             </div>
           </div>
-        ))}
+          );
+        })}
         {isSearching && <p className="text-center text-slate-400 py-4">Zoeken via Google Maps...</p>}
       </div>
     </div>

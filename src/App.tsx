@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.4.1';
+const APP_VERSION = 'v0.4.2';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -33,6 +33,7 @@ export default function App() {
   const [savedAttractionsData, setSavedAttractionsData] = useState<Attraction[]>([]);
   const [showDaySelector, setShowDaySelector] = useState<Attraction | null>(null);
   const [placeDetails, setPlaceDetails] = useState<{summary?: string, rating?: number, reviews?: number} | null>(null);
+  const [attractionsCache, setAttractionsCache] = useState<Record<string, any>>({});
   
   // Itinerary state: 8 days
   const initialItinerary = Array.from({ length: 8 }, (_, i) => `Dag ${i + 1}`).reduce((acc, day) => {
@@ -76,6 +77,18 @@ export default function App() {
           });
           return newItinerary;
         });
+
+        // Fetch all attractions cache to display pre-fetched images on Discover page
+        try {
+          const cacheRecords = await pb.collection('attractions_cache').getFullList();
+          const cacheMap: Record<string, any> = {};
+          cacheRecords.forEach(record => {
+            cacheMap[record.attraction_id] = record;
+          });
+          setAttractionsCache(cacheMap);
+        } catch (cacheErr) {
+          console.log("Could not load attractions_cache on init", cacheErr);
+        }
       } catch (err) {
         console.error("PocketBase connection failed on init:", err);
         showToast("Kon opgeslagen data niet ophalen. Offline modus actief.");
@@ -99,29 +112,32 @@ export default function App() {
           const cachedRecord = await pb.collection('attractions_cache').getFirstListItem(`attraction_id = "${selectedAttraction.id}"`);
           let cacheHit = false;
 
+          let hasImages = false;
+          let hasDetails = false;
+
           if (cachedRecord) {
             if (cachedRecord.imageUrls && cachedRecord.imageUrls.length > 0) {
               setDynamicImages(cachedRecord.imageUrls);
-              cacheHit = true;
+              hasImages = true;
             } else if (cachedRecord.imageUrl) {
               setDynamicImages([cachedRecord.imageUrl]);
-              cacheHit = true;
+              hasImages = true;
             } else if (cachedRecord.dynamicImages && cachedRecord.dynamicImages.length > 0) {
               setDynamicImages(cachedRecord.dynamicImages);
-              cacheHit = true;
-            }
-            if (cachedRecord.placeDetails) {
-              setPlaceDetails(cachedRecord.placeDetails);
-              cacheHit = true;
-            }
-            if (cachedRecord.routeSteps && cachedRecord.routeSteps.length > 0) {
-              setRouteSteps(cachedRecord.routeSteps);
-              // Note: If we use cached routeSteps, they might be base steps without user origin.
-              // For full cache implementation, this satisfies the user requirement.
+              hasImages = true;
             }
 
-            if (cacheHit) {
-              return; // Successfully loaded from cache
+            if (cachedRecord.placeDetails) {
+              setPlaceDetails(cachedRecord.placeDetails);
+              hasDetails = true;
+            }
+
+            if (cachedRecord.routeSteps && cachedRecord.routeSteps.length > 0) {
+              setRouteSteps(cachedRecord.routeSteps);
+            }
+
+            if (hasImages && hasDetails) {
+              return; // Successfully loaded everything from cache
             }
           }
         } catch (e) {
@@ -129,7 +145,7 @@ export default function App() {
           console.log("Not found in cache or PB offline, proceeding to APIs", e);
         }
 
-        // Fetch data via APIs if not in cache
+        // Fetch data via APIs if not fully in cache
         let newImages: string[] = [];
         let newDetails: any = null;
 
@@ -201,24 +217,45 @@ export default function App() {
         if (newImages.length > 0 || newDetails) {
           try {
             // First check if record exists to update it, otherwise create
-            let existingRecord = null;
+            let existingRecord: any = null;
             try {
               existingRecord = await pb.collection('attractions_cache').getFirstListItem(`attraction_id = "${selectedAttraction.id}"`);
             } catch (err) {
               // Not found
             }
 
-            const cacheData = {
+            // Only save images if we don't already have images in cache.
+            // This prevents overwriting user-pinned URLs from PB admin.
+            const hasExistingImages = existingRecord && (
+              (existingRecord.dynamicImages && existingRecord.dynamicImages.length > 0) ||
+              existingRecord.imageUrl ||
+              (existingRecord.imageUrls && existingRecord.imageUrls.length > 0)
+            );
+
+            const cacheData: any = {
               attraction_id: selectedAttraction.id,
-              dynamicImages: newImages,
-              imageUrl: newImages[0] || '',
-              placeDetails: newDetails,
             };
 
-            if (existingRecord) {
-               await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
-            } else {
-               await pb.collection('attractions_cache').create(cacheData);
+            if (newImages.length > 0 && !hasExistingImages) {
+              cacheData.dynamicImages = newImages;
+              cacheData.imageUrl = newImages[0] || '';
+            }
+            if (newDetails && (!existingRecord || !existingRecord.placeDetails)) {
+              cacheData.placeDetails = newDetails;
+            }
+
+            if (Object.keys(cacheData).length > 1) { // more than just attraction_id
+              let updatedRecord;
+              if (existingRecord) {
+                 updatedRecord = await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
+              } else {
+                 updatedRecord = await pb.collection('attractions_cache').create(cacheData);
+              }
+              // Update local state instantly for DiscoverTab
+              setAttractionsCache(prev => ({
+                ...prev,
+                [selectedAttraction.id]: updatedRecord
+              }));
             }
           } catch (e) {
             console.error("Failed to write to attractions_cache", e);
@@ -510,6 +547,7 @@ export default function App() {
             setCurrentImageIndex={setCurrentImageIndex}
             savedAttractions={savedAttractions}
             toggleSavedAttraction={toggleSavedAttraction}
+            attractionsCache={attractionsCache}
           />
         )}
         {activeTab === 'map' && (
