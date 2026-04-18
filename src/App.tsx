@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.5.1';
+const APP_VERSION = 'v0.5.2';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -81,72 +81,6 @@ export default function App() {
     };
 
     fetchInitialData();
-
-    // Set up real-time subscriptions
-    pb.collection('saved_attractions').subscribe('*', (e) => {
-      if (e.action === 'create' || e.action === 'update') {
-        setSavedAttractions(prev => {
-          if (!prev.includes(e.record.attraction_id)) {
-            return [...prev, e.record.attraction_id];
-          }
-          return prev;
-        });
-      } else if (e.action === 'delete') {
-        setSavedAttractions(prev => prev.filter(id => id !== e.record.attraction_id));
-      }
-    });
-
-    pb.collection('itinerary_items').subscribe('*', async (e) => {
-      // Bij een delete hebben we de volledige attraction data niet nodig, alleen het ID
-      if (e.action === 'delete') {
-        setItinerary(prev => {
-          const newItinerary = { ...prev };
-          Object.keys(newItinerary).forEach(day => {
-            newItinerary[day] = newItinerary[day].filter(a => a.id !== e.record.attraction_id);
-          });
-          return newItinerary;
-        });
-        return;
-      }
-
-      // Voor create/update proberen we de data te halen
-      let attraction = e.record.attraction_data || attractions.find(a => a.id === e.record.attraction_id);
-
-      // Als we het nog steeds niet hebben, probeer het via expand (als PocketBase dat ondersteunt)
-      if (!attraction && e.record.expand?.attraction_id) {
-        attraction = e.record.expand.attraction_id;
-      }
-
-      if (!attraction) return; // Mislukt om de attractie op te halen
-
-      if (e.action === 'create') {
-        setItinerary(prev => {
-          const newItinerary = { ...prev };
-          if (newItinerary[e.record.day] && !newItinerary[e.record.day].some(a => a.id === attraction.id)) {
-            newItinerary[e.record.day] = [...newItinerary[e.record.day], attraction];
-          }
-          return newItinerary;
-        });
-      } else if (e.action === 'update') {
-        setItinerary(prev => {
-          const newItinerary = { ...prev };
-          // Remove from all days first
-          Object.keys(newItinerary).forEach(day => {
-            newItinerary[day] = newItinerary[day].filter(a => a.id !== attraction.id);
-          });
-          // Add to the new day
-          if (newItinerary[e.record.day]) {
-            newItinerary[e.record.day] = [...newItinerary[e.record.day], attraction];
-          }
-          return newItinerary;
-        });
-      }
-    }, { expand: 'attraction_id' });
-
-    return () => {
-      pb.collection('saved_attractions').unsubscribe('*');
-      pb.collection('itinerary_items').unsubscribe('*');
-    };
   }, []);
 
   useEffect(() => {
