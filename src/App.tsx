@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.3.0';
+const APP_VERSION = 'v0.3.1';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
