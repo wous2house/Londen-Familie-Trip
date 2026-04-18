@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Clock, Ticket, Heart } from 'lucide-react';
+import { Search, Clock, Ticket, Heart, Loader2 } from 'lucide-react';
 import { Attraction } from '../data';
 
 interface DiscoverTabProps {
@@ -59,11 +59,12 @@ export default function DiscoverTab({
         <input
           type="text"
           placeholder={`Zoek in ${activeCity}...`}
-          className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-800 text-white placeholder-slate-400 shadow-sm border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          className="w-full pl-12 pr-12 py-4 rounded-2xl bg-slate-800 text-white placeholder-slate-400 shadow-sm border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Search className="absolute left-4 top-4 text-slate-400 w-5 h-5" />
+        {isSearching && <Loader2 className="absolute right-4 top-4 text-slate-400 w-5 h-5 animate-spin" />}
         <button type="submit" className="sr-only">Zoek</button>
       </form>
 

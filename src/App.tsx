@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.5.2';
+const APP_VERSION = 'v0.4.0';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -98,7 +98,13 @@ export default function App() {
           let cacheHit = false;
 
           if (cachedRecord) {
-            if (cachedRecord.dynamicImages && cachedRecord.dynamicImages.length > 0) {
+            if (cachedRecord.imageUrls && cachedRecord.imageUrls.length > 0) {
+              setDynamicImages(cachedRecord.imageUrls);
+              cacheHit = true;
+            } else if (cachedRecord.imageUrl) {
+              setDynamicImages([cachedRecord.imageUrl]);
+              cacheHit = true;
+            } else if (cachedRecord.dynamicImages && cachedRecord.dynamicImages.length > 0) {
               setDynamicImages(cachedRecord.dynamicImages);
               cacheHit = true;
             }
@@ -203,6 +209,7 @@ export default function App() {
             const cacheData = {
               attraction_id: selectedAttraction.id,
               dynamicImages: newImages,
+              imageUrl: newImages[0] || '',
               placeDetails: newDetails,
             };
 
@@ -241,7 +248,7 @@ export default function App() {
         name: r.name,
         shortDescription: r.shortDescription || r.address,
         fullDescription: r.shortDescription || 'Geen uitgebreide beschrijving beschikbaar.',
-        imageUrl: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000', // placeholder
+        imageUrl: r.imageUrl || 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000', // placeholder
         location: r.address,
         lat: r.lat,
         lng: r.lng,
