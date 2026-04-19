@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.4.3';
+const APP_VERSION = 'v0.4.4';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -34,6 +34,7 @@ export default function App() {
   const [showDaySelector, setShowDaySelector] = useState<Attraction | null>(null);
   const [placeDetails, setPlaceDetails] = useState<{summary?: string, rating?: number, reviews?: number} | null>(null);
   const [attractionsCache, setAttractionsCache] = useState<Record<string, any>>({});
+  const [imageDictionary, setImageDictionary] = useState<Record<string, string>>({});
   
   // Itinerary state: 8 days
   const initialItinerary = Array.from({ length: 8 }, (_, i) => `Dag ${i + 1}`).reduce((acc, day) => {
@@ -82,12 +83,42 @@ export default function App() {
         try {
           const cacheRecords = await pb.collection('attractions_cache').getFullList();
           const cacheMap: Record<string, any> = {};
+          const imageMap: Record<string, string> = {};
+
           cacheRecords.forEach(record => {
             cacheMap[record.attraction_id] = record;
+
+            let displayImage = '';
+            if (record.dynamicImages && record.dynamicImages.length > 0) {
+              displayImage = record.dynamicImages[0];
+            } else if (record.imageUrl) {
+              displayImage = record.imageUrl;
+            } else if (record.imageUrls && record.imageUrls.length > 0) {
+              displayImage = record.imageUrls[0];
+            }
+            if (displayImage) {
+              imageMap[record.attraction_id] = displayImage;
+            }
           });
           setAttractionsCache(cacheMap);
+
+          // Also pre-fill imageDictionary with static attractions images as fallback
+          attractions.forEach(a => {
+            if (!imageMap[a.id] && a.imageUrl) {
+              imageMap[a.id] = a.imageUrl;
+            }
+          });
+          setImageDictionary(imageMap);
         } catch (cacheErr) {
           console.log("Could not load attractions_cache on init", cacheErr);
+          // Pre-fill imageDictionary with static attractions images as fallback even if offline
+          const imageMap: Record<string, string> = {};
+          attractions.forEach(a => {
+            if (a.imageUrl) {
+              imageMap[a.id] = a.imageUrl;
+            }
+          });
+          setImageDictionary(imageMap);
         }
       } catch (err) {
         console.error("PocketBase connection failed on init:", err);
@@ -262,6 +293,13 @@ export default function App() {
                 ...prev,
                 [selectedAttraction.id]: updatedRecord
               }));
+
+              if (newImages.length > 0) {
+                setImageDictionary(prev => ({
+                  ...prev,
+                  [selectedAttraction.id]: newImages[0]
+                }));
+              }
             }
           } catch (e) {
             console.error("Failed to write to attractions_cache", e);
@@ -279,6 +317,7 @@ export default function App() {
       setSearchResults([]);
       return;
     }
+    setSearchResults([]); // Clear stale results before searching
     setIsSearching(true);
     // Local search first
     const local = attractions.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()) && a.city === activeCity);
@@ -288,7 +327,7 @@ export default function App() {
     } else {
       // Fallback to Gemini Maps search
       const results = await searchAttractions(`${searchQuery} in ${activeCity}`);
-      setSearchResults(results.map((r: any) => ({
+      const formattedResults = results.map((r: any) => ({
         id: `search-${r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
         name: r.name,
         shortDescription: r.shortDescription || r.address,
@@ -304,7 +343,20 @@ export default function App() {
         familyTip: '',
         city: activeCity,
         bookingUrl: r.bookingUrl
-      })));
+      }));
+
+      // Update image dictionary with search results images
+      setImageDictionary(prev => {
+        const newDict = { ...prev };
+        formattedResults.forEach((r: any) => {
+          if (r.imageUrl) {
+            newDict[r.id] = r.imageUrl;
+          }
+        });
+        return newDict;
+      });
+
+      setSearchResults(formattedResults);
       setIsSearching(false);
     }
   };
@@ -465,9 +517,11 @@ export default function App() {
     }
   };
 
-  const displayedAttractions = searchQuery && searchResults.length > 0 
-    ? searchResults 
-    : attractions.filter(a => a.city === activeCity);
+  const displayedAttractions = isSearching
+    ? []
+    : (searchQuery && searchResults.length > 0
+      ? searchResults
+      : attractions.filter(a => a.city === activeCity));
 
   const renderChat = () => (
     <div className={`fixed inset-0 bg-slate-900 z-[1000] flex flex-col transition-transform duration-300 ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
@@ -554,6 +608,7 @@ export default function App() {
             savedAttractions={savedAttractions}
             toggleSavedAttraction={toggleSavedAttraction}
             attractionsCache={attractionsCache}
+            imageDictionary={imageDictionary}
           />
         )}
         {activeTab === 'map' && (

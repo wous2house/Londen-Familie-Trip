@@ -17,6 +17,7 @@ interface DiscoverTabProps {
   savedAttractions: string[];
   toggleSavedAttraction: (attraction: Attraction) => void;
   attractionsCache: Record<string, any>;
+  imageDictionary: Record<string, string>;
 }
 
 export default function DiscoverTab({
@@ -33,7 +34,8 @@ export default function DiscoverTab({
   setCurrentImageIndex,
   savedAttractions,
   toggleSavedAttraction,
-  attractionsCache
+  attractionsCache,
+  imageDictionary
 }: DiscoverTabProps) {
   return (
     <div className="p-4 pb-24">
@@ -74,17 +76,7 @@ export default function DiscoverTab({
 
       <div className="grid gap-4">
         {displayedAttractions.map((attraction) => {
-          const cache = attractionsCache[attraction.id];
-          let displayImage = attraction.imageUrl;
-          if (cache) {
-            if (cache.dynamicImages && cache.dynamicImages.length > 0) {
-              displayImage = cache.dynamicImages[0];
-            } else if (cache.imageUrl) {
-              displayImage = cache.imageUrl;
-            } else if (cache.imageUrls && cache.imageUrls.length > 0) {
-              displayImage = cache.imageUrls[0];
-            }
-          }
+          let displayImage = imageDictionary[attraction.id] || attraction.imageUrl;
 
           if (!displayImage) {
             displayImage = 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000';

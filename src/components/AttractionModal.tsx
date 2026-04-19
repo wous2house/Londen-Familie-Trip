@@ -36,8 +36,15 @@ export default function AttractionModal({
   const fallbackImages = dynamicImages.length > 0 ? dynamicImages : (a.imageUrls && a.imageUrls.length > 0 ? a.imageUrls : []);
   let images = Array.from(new Set([...fallbackImages, a.imageUrl])).filter(Boolean);
 
+  const UNSPLASH_PLACEHOLDER = 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000';
+
+  // Filter out the Unsplash placeholder if there are actual real images available
+  if (images.length > 1) {
+    images = images.filter(img => img !== UNSPLASH_PLACEHOLDER);
+  }
+
   if (images.length === 0) {
-    images = ['https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000'];
+    images = [UNSPLASH_PLACEHOLDER];
   }
 
   return (
