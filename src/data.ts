@@ -23,12 +23,8 @@ export const attractions: Attraction[] = [
     name: 'Tower of London',
     shortDescription: 'Historisch kasteel en bewaarplaats van de kroonjuwelen.',
     fullDescription: 'Stap in duizend jaar geschiedenis. Dit iconische fort, gesticht door Willem de Veroveraar in 1066, heeft gediend als koninklijk paleis, zwaarbeveiligde gevangenis en legendarisch arsenaal. De dikke stenen muren hebben de kroonjuwelen bewaakt en boden onderdak aan enkele van de beroemdste — en beruchtste — gevangenen van Engeland. Tegenwoordig staat het op de UNESCO Werelderfgoedlijst en nodigt het families uit om de geheimen van het verleden te ontdekken tussen de formidabele White Tower en de angstaanjagende Bloody Tower.',
-    imageUrl: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&q=80&w=1000',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1568898573356-9122111c1072?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1626014903706-919d363c3e80?auto=format&fit=crop&q=80&w=1000'
-    ],
+    imageUrl: '',
+    imageUrls: [],
     location: "St Katharine's & Wapping, Londen EC3N 4AB",
     lat: 51.5081,
     lng: -0.0759,
@@ -50,12 +46,8 @@ export const attractions: Attraction[] = [
     name: 'London Eye',
     shortDescription: 'Gigantisch reuzenrad met panoramisch uitzicht over de stad.',
     fullDescription: 'De lastminute.com London Eye is een iconisch onderdeel van de skyline van Londen. Het is het hoogste vrijdragende reuzenrad ter wereld en biedt een adembenemend 360-graden uitzicht over de hoofdstad. Een ritje duurt ongeveer 30 minuten in een van de 32 hightech glazen capsules.',
-    imageUrl: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1505204372534-453000940562?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&q=80&w=1000'
-    ],
+    imageUrl: '',
+    imageUrls: [],
     location: 'Riverside Building, County Hall, Londen SE1 7PB',
     lat: 51.5033,
     lng: -0.1195,
@@ -75,11 +67,8 @@ export const attractions: Attraction[] = [
     name: 'Natural History Museum',
     shortDescription: 'Dinosauriërs, vulkanen en de wonderen van de natuur.',
     fullDescription: 'Een van de meest iconische en indrukwekkende gebouwen in Londen, het Natural History Museum herbergt honderden spannende, interactieve tentoonstellingen. Van brullende T-rexen tot glinsterende edelstenen, het is een fantastische plek voor nieuwsgierige geesten van alle leeftijden.',
-    imageUrl: 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&q=80&w=1000',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1518998053401-a41c24c2a553?auto=format&fit=crop&q=80&w=1000'
-    ],
+    imageUrl: '',
+    imageUrls: [],
     location: 'Cromwell Rd, South Kensington, Londen SW7 5BD',
     lat: 51.4967,
     lng: -0.1764,
@@ -100,11 +89,8 @@ export const attractions: Attraction[] = [
     name: 'Big Ben & Parliament',
     shortDescription: 'De beroemdste klokkentoren ter wereld.',
     fullDescription: 'De Elizabeth Tower, beter bekend als de Big Ben, is misschien wel het meest iconische herkenningspunt van Londen. Gelegen aan de noordkant van het Palace of Westminster, is het een must-see voor elke bezoeker.',
-    imageUrl: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&q=80&w=1000',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1508050919630-b135583b29ab?auto=format&fit=crop&q=80&w=1000'
-    ],
+    imageUrl: '',
+    imageUrls: [],
     location: 'Londen SW1A 0AA',
     lat: 51.5007,
     lng: -0.1246,
@@ -124,11 +110,8 @@ export const attractions: Attraction[] = [
     name: 'Christ Church College',
     shortDescription: 'Beroemd college, bekend van Harry Potter.',
     fullDescription: 'Christ Church is een van de grootste en mooiste colleges van de Universiteit van Oxford. Het is beroemd om zijn prachtige architectuur, de kathedraal en de Great Hall, die de inspiratie vormde voor de eetzaal van Zweinstein in de Harry Potter-films.',
-    imageUrl: 'https://images.unsplash.com/photo-1604871000636-074fa5117945?auto=format&fit=crop&q=80&w=1000',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1604871000636-074fa5117945?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1590061537058-29367d264562?auto=format&fit=crop&q=80&w=1000'
-    ],
+    imageUrl: '',
+    imageUrls: [],
     location: 'St Aldates, Oxford OX1 1DP',
     lat: 51.7502,
     lng: -1.2562,
@@ -148,11 +131,8 @@ export const attractions: Attraction[] = [
     name: 'Oxford University Museum of Natural History',
     shortDescription: 'Prachtig museum vol dinosaurusskeletten en dodo-resten.',
     fullDescription: 'Dit museum herbergt de internationaal belangrijke collecties geologische en zoölogische specimens van de universiteit. Het prachtige neogotische gebouw is op zichzelf al een bezienswaardigheid, met een glazen dak en gietijzeren pilaren.',
-    imageUrl: 'https://images.unsplash.com/photo-1584652868574-0669f4292976?auto=format&fit=crop&q=80&w=1000',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1584652868574-0669f4292976?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1603714228681-b399854b8f80?auto=format&fit=crop&q=80&w=1000'
-    ],
+    imageUrl: '',
+    imageUrls: [],
     location: 'Parks Rd, Oxford OX1 3PW',
     lat: 51.7587,
     lng: -1.2557,
