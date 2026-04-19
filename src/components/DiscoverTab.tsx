@@ -78,10 +78,6 @@ export default function DiscoverTab({
         {displayedAttractions.map((attraction) => {
           let displayImage = imageDictionary[attraction.id] || attraction.imageUrl;
 
-          if (!displayImage) {
-            displayImage = 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000';
-          }
-
           return (
             <div
               key={attraction.id}
@@ -92,7 +88,11 @@ export default function DiscoverTab({
               }}
             >
               <div className="h-56 overflow-hidden relative">
-                <img src={displayImage} alt={attraction.name} className="w-full h-full object-cover" />
+                {displayImage ? (
+                  <img src={displayImage} alt={attraction.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-slate-700 animate-pulse"></div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
               <div
                 className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md p-2 rounded-full border border-white/10 z-10"

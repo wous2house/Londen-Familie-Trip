@@ -14,7 +14,75 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.4.4';
+const APP_VERSION = 'v0.4.5';
+
+export async function fetchAttractionImages(attractionName: string, city: string): Promise<{images: string[], details: any}> {
+  let newImages: string[] = [];
+  let newDetails: any = null;
+
+  const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+  let googleSuccess = false;
+
+  if (apiKey) {
+    try {
+      const query = `${attractionName} ${city}`;
+      const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.photos,places.editorialSummary,places.rating,places.userRatingCount'
+        },
+        body: JSON.stringify({ textQuery: query })
+      });
+      const data = await response.json();
+
+      if (data.places && data.places.length > 0) {
+        const place = data.places[0];
+
+        if (place.photos) {
+          const photos = place.photos.slice(0, 5);
+          newImages = photos.map((photo: any) =>
+            `https://places.googleapis.com/v1/${photo.name}/media?maxHeightPx=800&maxWidthPx=800&key=${apiKey}`
+          );
+        }
+
+        newDetails = {
+          summary: place.editorialSummary?.text,
+          rating: place.rating,
+          reviews: place.userRatingCount
+        };
+        googleSuccess = true;
+      }
+    } catch (e) {
+      console.error("Failed to fetch Google Places data", e);
+    }
+  }
+
+  // Fallback to Wikimedia Commons if Google failed or didn't find images
+  if (!googleSuccess || newImages.length === 0) {
+    try {
+      const query = `${attractionName} ${city}`;
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url&format=json&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.query && data.query.pages) {
+        const urls = Object.values(data.query.pages)
+          .map((page: any) => page.imageinfo?.[0]?.url)
+          .filter((url: string) => url && !url.toLowerCase().endsWith('.svg') && !url.toLowerCase().endsWith('.pdf'));
+
+        if (urls.length > 0) {
+          newImages = urls as string[];
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch real images", e);
+    }
+  }
+
+  return { images: newImages, details: newDetails };
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('discover');
@@ -177,77 +245,15 @@ export default function App() {
         }
 
         // Fetch data via APIs if not fully in cache
-        let newImages: string[] = [];
-        let newDetails: any = null;
+        const fetchResult = await fetchAttractionImages(selectedAttraction.name, selectedAttraction.city);
+        let newImages = fetchResult.images;
+        let newDetails = fetchResult.details;
 
-        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
-        let googleSuccess = false;
-        
-        if (apiKey) {
-          try {
-            const query = `${selectedAttraction.name} ${selectedAttraction.city}`;
-            const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Goog-Api-Key': apiKey,
-                'X-Goog-FieldMask': 'places.photos,places.editorialSummary,places.rating,places.userRatingCount'
-              },
-              body: JSON.stringify({ textQuery: query })
-            });
-            const data = await response.json();
-            
-            if (data.places && data.places.length > 0) {
-              const place = data.places[0];
-              
-              if (place.photos) {
-                const photos = place.photos.slice(0, 5);
-                newImages = photos.map((photo: any) =>
-                  `https://places.googleapis.com/v1/${photo.name}/media?maxHeightPx=800&maxWidthPx=800&key=${apiKey}`
-                );
-                setDynamicImages(newImages);
-              }
-              
-              newDetails = {
-                summary: place.editorialSummary?.text,
-                rating: place.rating,
-                reviews: place.userRatingCount
-              };
-              setPlaceDetails(newDetails);
-              googleSuccess = true;
-            }
-          } catch (e) {
-            console.error("Failed to fetch Google Places data", e);
-          }
-        }
-
-        // Fallback to Wikimedia Commons if Google failed or didn't find images
-        if (!googleSuccess || newImages.length === 0) {
-          try {
-            const query = `${selectedAttraction.name} ${selectedAttraction.city}`;
-            const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url&format=json&origin=*`;
-            const res = await fetch(url);
-            const data = await res.json();
-            
-            if (data.query && data.query.pages) {
-              const urls = Object.values(data.query.pages)
-                .map((page: any) => page.imageinfo?.[0]?.url)
-                .filter((url: string) => url && !url.toLowerCase().endsWith('.svg') && !url.toLowerCase().endsWith('.pdf'));
-
-              if (urls.length > 0) {
-                newImages = urls as string[];
-                setDynamicImages(newImages);
-              }
-            }
-          } catch (e) {
-            console.error("Failed to fetch real images", e);
-          }
-        }
-
-        // Final fallback: use Unsplash placeholder if both Google Places and Wikimedia Commons fail
-        if (newImages.length === 0) {
-          newImages = ['https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1000'];
+        if (newImages.length > 0) {
           setDynamicImages(newImages);
+        }
+        if (newDetails) {
+          setPlaceDetails(newDetails);
         }
 
         // Save fetched data back to cache
@@ -522,6 +528,94 @@ export default function App() {
     : (searchQuery && searchResults.length > 0
       ? searchResults
       : attractions.filter(a => a.city === activeCity));
+
+  // Background fetch for list displayedAttractions
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMissingImages = async () => {
+      // Small delay to allow UI to render first
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const missing = displayedAttractions.filter(a => {
+        // If it's already in dictionary or cache with images, or if we already checked it, skip
+        const cached = attractionsCache[a.id];
+        const hasCachedImages = cached && (
+          (cached.dynamicImages && cached.dynamicImages.length > 0) ||
+          cached.imageUrl ||
+          (cached.imageUrls && cached.imageUrls.length > 0)
+        );
+        // also check if we explicitly tracked checking it
+        const hasAttemptedFetch = cached && cached.attraction_id === a.id;
+        return !imageDictionary[a.id] && !hasCachedImages && !hasAttemptedFetch;
+      });
+
+      if (missing.length === 0) return;
+
+      for (const a of missing) {
+        if (!isMounted) break;
+        try {
+          const fetchResult = await fetchAttractionImages(a.name, a.city);
+          if (!isMounted) break;
+
+          let newImages = fetchResult.images;
+          let newDetails = fetchResult.details;
+
+          // Always record that we fetched for this attraction to avoid refetching it indefinitely if it fails
+          setAttractionsCache(prev => ({ ...prev, [a.id]: prev[a.id] || { attraction_id: a.id } }));
+
+          // Save to PB and state
+          if (newImages.length > 0 || newDetails) {
+            let existingRecord: any = null;
+            try {
+              existingRecord = await pb.collection('attractions_cache').getFirstListItem(`attraction_id = "${a.id}"`);
+            } catch (err) {
+              // Not found
+            }
+
+            const cacheData: any = {
+              attraction_id: a.id,
+            };
+
+            if (newImages.length > 0) {
+              cacheData.dynamicImages = newImages;
+              cacheData.imageUrl = newImages[0] || '';
+            }
+            if (newDetails && (!existingRecord || !existingRecord.placeDetails)) {
+              cacheData.placeDetails = newDetails;
+            }
+
+            if (Object.keys(cacheData).length > 1) {
+              let updatedRecord;
+              if (existingRecord) {
+                 updatedRecord = await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
+              } else {
+                 updatedRecord = await pb.collection('attractions_cache').create(cacheData);
+              }
+
+              // Update state
+              setAttractionsCache(prev => ({ ...prev, [a.id]: updatedRecord }));
+              if (newImages.length > 0) {
+                setImageDictionary(prev => ({ ...prev, [a.id]: newImages[0] }));
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed background fetch for", a.name, err);
+        }
+
+        // Brief pause between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    };
+
+    if (displayedAttractions.length > 0) {
+      fetchMissingImages();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [displayedAttractions]); // Removed attractionsCache and imageDictionary to prevent infinite loops
 
   const renderChat = () => (
     <div className={`fixed inset-0 bg-slate-900 z-[1000] flex flex-col transition-transform duration-300 ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
