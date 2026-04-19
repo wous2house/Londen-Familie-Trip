@@ -14,7 +14,7 @@ import AttractionModal from './components/AttractionModal';
 export type Tab = 'discover' | 'map' | 'itinerary' | 'saved';
 export type City = 'Londen' | 'Oxford';
 
-const APP_VERSION = 'v0.4.5';
+const APP_VERSION = 'v0.4.6';
 
 export async function fetchAttractionImages(attractionName: string, city: string): Promise<{images: string[], details: any}> {
   let newImages: string[] = [];
@@ -720,6 +720,7 @@ export default function App() {
             setActiveTab={setActiveTab}
             setSelectedAttraction={setSelectedAttraction}
             setCurrentImageIndex={setCurrentImageIndex}
+            imageDictionary={imageDictionary}
           />
         )}
         {activeTab === 'saved' && (
@@ -729,6 +730,7 @@ export default function App() {
             setSelectedAttraction={setSelectedAttraction}
             setCurrentImageIndex={setCurrentImageIndex}
             toggleSavedAttraction={toggleSavedAttraction}
+            imageDictionary={imageDictionary}
           />
         )}
       </div>

@@ -8,6 +8,7 @@ interface SavedTabProps {
   setSelectedAttraction: (attraction: Attraction | null) => void;
   setCurrentImageIndex: (index: number) => void;
   toggleSavedAttraction: (attraction: Attraction) => void;
+  imageDictionary: Record<string, string>;
 }
 
 export default function SavedTab({
@@ -15,7 +16,8 @@ export default function SavedTab({
   setActiveTab,
   setSelectedAttraction,
   setCurrentImageIndex,
-  toggleSavedAttraction
+  toggleSavedAttraction,
+  imageDictionary
 }: SavedTabProps) {
   return (
     <div className="p-4 pb-24 h-full overflow-y-auto">
@@ -33,18 +35,25 @@ export default function SavedTab({
         </div>
       ) : (
         <div className="grid gap-4">
-          {savedAttractionsData.map((attraction) => (
-            <div
-              key={attraction.id}
-              className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
-              onClick={() => {
-                setSelectedAttraction(attraction);
-                setCurrentImageIndex(0);
-              }}
-            >
-              <div className="h-40 overflow-hidden relative">
-                <img src={attraction.imageUrl} alt={attraction.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+          {savedAttractionsData.map((attraction) => {
+            const displayImage = imageDictionary[attraction.id] || attraction.imageUrl;
+
+            return (
+              <div
+                key={attraction.id}
+                className="bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
+                onClick={() => {
+                  setSelectedAttraction(attraction);
+                  setCurrentImageIndex(0);
+                }}
+              >
+                <div className="h-40 overflow-hidden relative">
+                  {displayImage ? (
+                    <img src={displayImage} alt={attraction.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-slate-700 animate-pulse"></div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
                 <div
                   className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md p-2 rounded-full border border-white/10 z-10"
                   onClick={(e) => {
@@ -54,12 +63,13 @@ export default function SavedTab({
                 >
                   <Heart className="w-5 h-5 fill-red-500 text-red-500" />
                 </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">{attraction.name}</h3>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">{attraction.name}</h3>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
