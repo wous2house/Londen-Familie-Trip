@@ -306,10 +306,25 @@ export default function App() {
 
             if (Object.keys(cacheData).length > 1) { // more than just attraction_id
               let updatedRecord;
-              if (existingRecord) {
-                 updatedRecord = await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
-              } else {
-                 updatedRecord = await pb.collection('attractions_cache').create(cacheData);
+              try {
+                if (existingRecord) {
+                  try {
+                    updatedRecord = await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
+                  } catch (updateErr: any) {
+                    if (updateErr.status === 404) {
+                      console.warn(`[404] attractions_cache update failed for id: ${existingRecord.id}. Falling back to search_cache...`);
+                      updatedRecord = await pb.collection('search_cache').update(existingRecord.id, cacheData);
+                    } else {
+                      throw updateErr;
+                    }
+                  }
+                } else {
+                   updatedRecord = await pb.collection('attractions_cache').create(cacheData);
+                }
+              } catch (err: any) {
+                console.warn("Failed to write to cache collections", err);
+                // Fallback to updating state locally even if PB write failed
+                updatedRecord = { ...existingRecord, ...cacheData };
               }
               // Update local state instantly for DiscoverTab
               setAttractionsCache(prev => ({
@@ -564,12 +579,21 @@ export default function App() {
         } catch (err) { }
 
         if (existingRecord) {
-          await pb.collection('attractions_cache').update(existingRecord.id, { routeSteps: steps });
+          try {
+            await pb.collection('attractions_cache').update(existingRecord.id, { routeSteps: steps });
+          } catch (updateErr: any) {
+            if (updateErr.status === 404) {
+              console.warn(`[404] attractions_cache update failed for routeSteps id: ${existingRecord.id}. Falling back to search_cache...`);
+              await pb.collection('search_cache').update(existingRecord.id, { routeSteps: steps });
+            } else {
+              throw updateErr;
+            }
+          }
         } else {
           await pb.collection('attractions_cache').create({ attraction_id: attraction.id, routeSteps: steps });
         }
-      } catch (e) {
-        console.error("Failed to write routeSteps to cache", e);
+      } catch (e: any) {
+        console.warn("Failed to write routeSteps to cache", e);
       }
     };
 
@@ -664,10 +688,24 @@ export default function App() {
 
             if (Object.keys(cacheData).length > 1) {
               let updatedRecord;
-              if (existingRecord) {
-                 updatedRecord = await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
-              } else {
-                 updatedRecord = await pb.collection('attractions_cache').create(cacheData);
+              try {
+                if (existingRecord) {
+                  try {
+                    updatedRecord = await pb.collection('attractions_cache').update(existingRecord.id, cacheData);
+                  } catch (updateErr: any) {
+                    if (updateErr.status === 404) {
+                      console.warn(`[404] attractions_cache update failed for bg-fetch id: ${existingRecord.id}. Falling back to search_cache...`);
+                      updatedRecord = await pb.collection('search_cache').update(existingRecord.id, cacheData);
+                    } else {
+                      throw updateErr;
+                    }
+                  }
+                } else {
+                   updatedRecord = await pb.collection('attractions_cache').create(cacheData);
+                }
+              } catch (err: any) {
+                console.warn("Failed to write to cache collections during bg fetch", err);
+                updatedRecord = { ...existingRecord, ...cacheData };
               }
 
               // Update state
