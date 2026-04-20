@@ -68,7 +68,7 @@ export default function AttractionModal({
     }
 
     for (const period of periods) {
-      if (!period.open || !period.close) continue;
+      if (!period.open || !period.close || !period.open.time || !period.close.time) continue;
 
       const openDag = period.open.day;
       const sluitDag = period.close.day;
@@ -142,7 +142,7 @@ export default function AttractionModal({
             <div className="flex items-center text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
               <Clock className="w-4 h-4 mr-1 text-blue-400" /> Openingstijden
             </div>
-            <div className="font-bold text-slate-900 dark:text-white text-lg">{a.openingHours}</div>
+            <div className="font-bold text-slate-900 dark:text-white text-lg">{a.openingHours || 'Geen tijden bekend'}</div>
           </div>
           <div className="text-right">
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Status</div>

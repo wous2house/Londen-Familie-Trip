@@ -91,7 +91,7 @@ export default function ItineraryTab({
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedAttraction(item); setCurrentImageIndex(0); }}>
                       <h3 className="font-bold text-slate-900 dark:text-white text-lg truncate">{item.name}</h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center mt-2 truncate">
-                        <MapPin className="w-3 h-3 mr-1 shrink-0" /> <span className="truncate">{item.location.split(',')[0]}</span>
+                        <MapPin className="w-3 h-3 mr-1 shrink-0" /> <span className="truncate">{item.location?.split(',')[0] || 'Unknown location'}</span>
                       </p>
                     </div>
                     <div className="flex flex-col space-y-2 ml-2">
