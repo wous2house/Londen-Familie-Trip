@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, MapPin, Loader2, Heart, Clock, Navigation, Sun, Moon, Ticket } from 'lucide-react';
 import { Attraction } from '../data';
+import { pb } from '../lib/pocketbase';
 
 interface DiscoverTabProps {
   APP_VERSION: string;
@@ -41,6 +42,79 @@ export default function DiscoverTab({
   isDarkMode,
   setIsDarkMode
 }: DiscoverTabProps) {
+  const [recentSearches, setRecentSearches] = useState<Attraction[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRecent = async () => {
+      try {
+        const records = await pb.collection('search_cache').getList(1, 10, {
+          sort: '-created',
+          filter: `query ~ "${activeCity}"`
+        });
+
+        let extracted: Attraction[] = [];
+        for (const record of records.items) {
+          if (record.results && Array.isArray(record.results)) {
+            for (const r of record.results) {
+              if (extracted.length >= 5) break;
+
+              const id = `search-${r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+              if (!extracted.some(a => a.id === id)) {
+                extracted.push({
+                  id,
+                  name: r.name,
+                  shortDescription: r.shortDescription || r.address || '',
+                  fullDescription: r.shortDescription || 'Geen uitgebreide beschrijving beschikbaar.',
+                  imageUrl: '',
+                  location: r.address || activeCity,
+                  lat: r.lat || 0,
+                  lng: r.lng || 0,
+                  ticketRequired: !!r.ticketRequired,
+                  timeSlotRequired: false,
+                  openingHours: 'Check website voor actuele tijden',
+                  highlights: [],
+                  familyTip: 'Leuk voor de hele familie!',
+                  city: activeCity,
+                  bookingUrl: r.bookingUrl
+                });
+              }
+            }
+          }
+          if (extracted.length >= 5) break;
+        }
+
+        if (isMounted) {
+          setRecentSearches(extracted);
+        }
+      } catch (e) {
+        console.error("Failed to load recent searches", e);
+      }
+    };
+
+    if (!isSearching && searchQuery === '') {
+      fetchRecent();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCity, isSearching, searchQuery]);
+
+  const finalAttractions = useMemo(() => {
+    if (isSearching || searchQuery !== '') {
+      return displayedAttractions;
+    }
+
+    const combined = [...recentSearches];
+    for (const attr of displayedAttractions) {
+      if (!combined.some(a => a.id === attr.id)) {
+        combined.push(attr);
+      }
+    }
+    return combined;
+  }, [displayedAttractions, recentSearches, isSearching, searchQuery]);
+
   return (
     <div className="p-4 pb-24">
       <div className="flex justify-between items-center mb-6 pt-4">
@@ -84,10 +158,10 @@ export default function DiscoverTab({
         <button type="submit" className="sr-only">Zoek</button>
       </form>
 
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Aanbevolen in {activeCity}</h2>
+
 
       <div className="grid gap-4">
-        {displayedAttractions.map((attraction) => {
+        {finalAttractions.map((attraction) => {
           let displayImage = imageDictionary[attraction.id] || attraction.imageUrl;
 
           return (
