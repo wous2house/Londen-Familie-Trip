@@ -21,7 +21,7 @@ export async function searchAttractions(query: string) {
   }
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: `Zoek naar bezienswaardigheden of plekken in Londen of Oxford die overeenkomen met: "${query}". 
       Geef de resultaten terug in JSON formaat met een array genaamd 'results'. 
       Elk object moet hebben: 'name', 'shortDescription', 'address', 'lat' (number), 'lng' (number), 'ticketRequired' (boolean), en optioneel 'bookingUrl' (string, de officiële website om tickets te boeken).`,
@@ -78,7 +78,7 @@ export async function getRouteSteps(destination: string, city: string, originLat
   }
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: `Je bent een behulpzame reisassistent. Geef een overzichtelijke, stapsgewijze routebeschrijving (bij voorkeur met openbaar vervoer of lopend) van ${originText} naar de bezienswaardigheid "${destination}" in ${city}. 
       Geef de resultaten terug in strikt JSON formaat met een array genaamd 'steps'. Elk element in de array is een string die één stap van de route beschrijft.`,
       config: {
@@ -117,7 +117,7 @@ export async function chatWithAssistant(history: { role: 'user' | 'model', parts
   }
   try {
     const chat = ai.chats.create({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       config: {
         systemInstruction: `Je bent een vriendelijke, behulpzame reisassistent voor een familietrip naar Londen en Oxford. 
         Je helpt met vragen over bezienswaardigheden, routes, openingstijden en tips voor kinderen.
@@ -135,7 +135,7 @@ export async function chatWithAssistant(history: { role: 'user' | 'model', parts
     const contents = history.map(h => ({ role: h.role, parts: h.parts })).concat([{ role: 'user', parts: [{ text: message }] }]);
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: contents as any,
       config: {
         systemInstruction: `Je bent een vriendelijke, behulpzame reisassistent voor een familietrip naar Londen en Oxford. 
