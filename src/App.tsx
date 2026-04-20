@@ -695,7 +695,7 @@ export default function App() {
   }, [displayedAttractions]); // Removed attractionsCache and imageDictionary to prevent infinite loops
 
   const renderChat = () => (
-    <div className={`fixed inset-0 bg-gray-50 dark:bg-slate-900 z-[1000] flex flex-col transition-transform duration-300 ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+    <div className={`fixed inset-0 bg-gray-50 dark:bg-slate-900 z-[2000] flex flex-col transition-transform duration-300 ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
       <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white p-5 flex items-center justify-between shadow-md pt-safe">
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center mr-3 shadow-lg shadow-blue-900/20">
@@ -880,28 +880,40 @@ export default function App() {
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 w-full bg-white border-slate-200 dark:bg-slate-900/90 dark:border-slate-800 backdrop-blur-lg border-t px-6 py-4 flex justify-between items-center z-[1100] pb-safe">
         <button 
-          onClick={() => setActiveTab('discover')}
+          onClick={() => {
+            setActiveTab('discover');
+            setSelectedAttraction(null);
+          }}
           className={`flex flex-col items-center transition-colors ${activeTab === 'discover' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-500 dark:text-slate-400'}`}
         >
           <Compass className="w-6 h-6 mb-1.5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Ontdek</span>
         </button>
         <button 
-          onClick={() => setActiveTab('saved')}
+          onClick={() => {
+            setActiveTab('saved');
+            setSelectedAttraction(null);
+          }}
           className={`flex flex-col items-center transition-colors ${activeTab === 'saved' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-500 dark:text-slate-400'}`}
         >
           <Heart className="w-6 h-6 mb-1.5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Opgeslagen</span>
         </button>
         <button 
-          onClick={() => setActiveTab('map')}
+          onClick={() => {
+            setActiveTab('map');
+            setSelectedAttraction(null);
+          }}
           className={`flex flex-col items-center transition-colors ${activeTab === 'map' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-500 dark:text-slate-400'}`}
         >
           <MapPin className="w-6 h-6 mb-1.5" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Kaart</span>
         </button>
         <button 
-          onClick={() => setActiveTab('itinerary')}
+          onClick={() => {
+            setActiveTab('itinerary');
+            setSelectedAttraction(null);
+          }}
           className={`flex flex-col items-center transition-colors ${activeTab === 'itinerary' ? 'text-blue-400' : 'text-slate-500 hover:text-slate-500 dark:text-slate-400'}`}
         >
           <Calendar className="w-6 h-6 mb-1.5" />

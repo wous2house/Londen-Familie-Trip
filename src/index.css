@@ -4,27 +4,18 @@
 
 /* Custom Leaflet Popup Styles for Light and Dark Mode */
 .custom-popup .leaflet-popup-content-wrapper {
-  background: #ffffff;
-  color: #0f172a;
   border-radius: 1rem;
-  border: 1px solid #e2e8f0;
-}
-.dark .custom-popup .leaflet-popup-content-wrapper {
-  background: #1e293b;
-  color: #f8fafc;
-  border: 1px solid #334155;
+  @apply bg-white text-slate-900 border border-slate-200 dark:bg-slate-800 dark:text-white dark:border-slate-700;
 }
 
 .custom-popup .leaflet-popup-tip {
-  background: #ffffff;
-}
-.dark .custom-popup .leaflet-popup-tip {
-  background: #1e293b;
+  @apply bg-white dark:bg-slate-800;
 }
 
 .custom-popup .leaflet-popup-close-button {
-  color: #64748b !important;
+  @apply text-slate-500 dark:text-slate-400;
+  color: theme('colors.slate.500') !important;
 }
 .dark .custom-popup .leaflet-popup-close-button {
-  color: #94a3b8 !important;
+  color: theme('colors.slate.400') !important;
 }
