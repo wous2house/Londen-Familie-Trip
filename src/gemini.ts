@@ -117,7 +117,7 @@ export async function chatWithAssistant(history: { role: 'user' | 'model', parts
   }
   try {
     const chat = ai.chats.create({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3-flash-preview',
       config: {
         systemInstruction: `Je bent een vriendelijke, behulpzame reisassistent voor een familietrip naar Londen en Oxford. 
         Je helpt met vragen over bezienswaardigheden, routes, openingstijden en tips voor kinderen.
@@ -135,7 +135,7 @@ export async function chatWithAssistant(history: { role: 'user' | 'model', parts
     const contents = history.map(h => ({ role: h.role, parts: h.parts })).concat([{ role: 'user', parts: [{ text: message }] }]);
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: contents as any,
       config: {
         systemInstruction: `Je bent een vriendelijke, behulpzame reisassistent voor een familietrip naar Londen en Oxford. 
