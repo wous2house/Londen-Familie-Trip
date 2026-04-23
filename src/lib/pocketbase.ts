@@ -1,6 +1,7 @@
 import PocketBase from 'pocketbase';
 
-export const pb = new PocketBase(import.meta.env.VITE_POCKETBASE_URL || '');
+// Ensure the fallback connects directly to your database even if the .env isn't present
+export const pb = new PocketBase(import.meta.env.VITE_POCKETBASE_URL || 'https://db.londen.tweehuijsen.nl');
 
 export async function loginAnonymously() {
   // Voorbeeld implementatie voor anoniem inloggen, pas aan indien nodig.
